@@ -1,0 +1,1 @@
+from src.genetic_algorithm.genetic_alorithm import *
