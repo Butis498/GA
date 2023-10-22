@@ -8,6 +8,6 @@ class MutationInterface(metaclass=ABCMeta):
         self.r_mut = r_mut
     
     @abstractclassmethod
-    def mutate(self,individual):
+    def mutate(self,individual,bounds):
         '''Mutate'''
         raise NotImplementedError

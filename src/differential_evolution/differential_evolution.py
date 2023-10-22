@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from src.domain.cross_over import CrossOverInterface
 from src.domain.mutations import MutationInterface
 from src.domain.fitness import FitnessInterface
@@ -5,20 +6,18 @@ from src.domain.penalty import PenaltyInterface
 from src.domain.encoding import EncodingInterface
 from src.domain.selection import SelectionInterface
 from src.domain.population import PopulationInterface
-from dataclasses import dataclass
 import pandas as pd
 
 @dataclass
-class GAConfig():
+class DEConfig():
     n_pop:int = 100
     n_iter:int = 100
     minimize:bool = True
 
-
-class GeneticAlgorithm(object):
+class DifferentialEvolution():
 
     def __init__(self,cross_over:CrossOverInterface=None,mutation:MutationInterface=None,fitness:FitnessInterface=None,population:PopulationInterface=None,
-                 encoding:EncodingInterface=None,penalty:PenaltyInterface=None,selection:SelectionInterface=None,config:GAConfig=None) -> None:
+                 encoding:EncodingInterface=None,penalty:PenaltyInterface=None,selection:SelectionInterface=None,config:DEConfig=None) -> None:
         
         self.crossover = cross_over
         self.mutation = mutation
@@ -30,7 +29,7 @@ class GeneticAlgorithm(object):
         if config:
             self.config = config
         else:
-            self.config = GAConfig()
+            self.config = DEConfig()
 
 
         self.selection = selection
@@ -46,7 +45,6 @@ class GeneticAlgorithm(object):
             return False
         
         return False
-    
 
     def function_evaluation(self,objective,ind):
 
@@ -55,8 +53,7 @@ class GeneticAlgorithm(object):
             return objective(ind) + self.penalty.punish(ind,self.encoding.bounds,self.config.minimize,self)
         
         return objective(ind)
-            
-        
+
 
     def run(self,objective,verbose=True,report_name=False):
 
@@ -72,10 +69,9 @@ class GeneticAlgorithm(object):
             c_out_of_bound_list = []
             pop = self.population_generator.generate(self.config.n_pop,self.encoding)
             # keep track of best solution
-            best, best_eval = 0, self.function_evaluation(objective,self.encoding.decode(pop[0]))
+            best, best_eval = pop[0], self.function_evaluation(objective,self.encoding.decode(pop[0]))
 
         
-            
             # enumerate generations
             for gen in range(self.config.n_iter):
                 # self.encoding.decode population
@@ -104,33 +100,22 @@ class GeneticAlgorithm(object):
                 best_eval_list.append(best_eval)
                 c_out_of_bound_list.append(out_of_bounds)
 
-                # select parents
                 
-                selected = [self.selection.select(pop, scores,True) for _ in range(self.config.n_pop)]
-
-                # create the next generation
                 children = list()
-                for i in range(0, self.config.n_pop,2):
+                # create the next generation
+                for i in range(self.config.n_pop):
 
+                    ind = decoded_ind[i]
+                    selected = self.selection.select(decoded_ind,scores)
+                    u = self.mutation.mutate(selected,self.encoding.bounds)
+                    new_ind = self.crossover.cross_over(ind,u)
 
-                    if selected == None:
-                        print('error')
+                    if self.__eval(self.function_evaluation(objective,new_ind),self.function_evaluation(objective,ind)):
+                        children.append(new_ind)
 
-                    parents = [selected[j+i] for j in range(self.crossover.n_parents)]
-
-
-
-                    # crossover and mutation
+                    else:
+                        children.append(ind)
                     
-                    children_result = self.crossover.cross_over(parents,self.encoding.bounds)
-
-
-                    for child in children_result:
-                        # mutation
-                        self.mutation.mutate(child,self.encoding.bounds)
-
-                        # store for next generation
-                        children.append(child)
 
                 # replace population
                 pop = self.population_generator.update(children)
@@ -147,6 +132,3 @@ class GeneticAlgorithm(object):
 
 
         return [best, best_eval]
- 
-
-

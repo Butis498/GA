@@ -9,7 +9,11 @@ class BinaryTS(SelectionInterface):
         index1, index2 = random.sample(range(len(population)), 2)
         
         # Compare their fitness values and select the better one
-        if scores[index1] > scores[index2] and not minimize:
-            return population[index1]
+        if minimize:
+            if scores[index1] < scores[index2]:
+                return population[index1]
+            return population[index2]
         else:
+            if scores[index1] > scores[index2]:
+                return population[index1]
             return population[index2]
