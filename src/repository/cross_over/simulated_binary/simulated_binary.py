@@ -7,6 +7,8 @@ class SimulatedBC(CrossOverInterface):
     def cross_over(self,parents,bounds=[]):
 
         p1,p2 = parents
+
+
         p1 = np.array(p1)
         p2 = np.array(p2)
         eta=20
@@ -24,8 +26,8 @@ class SimulatedBC(CrossOverInterface):
         off1 = 0.5*((p1+p2)-beta*np.linalg.norm(p2-p1))
         off2 = 0.5*((p1+p2)+beta*np.linalg.norm(p2-p1))
 
-        #off1 = np.array([min(max(x, bounds[i][0]), bounds[i][1]) for i,x in enumerate(off1)])
-        #off2 = np.array([min(max(x, bounds[i][0]), bounds[i][1]) for i,x in enumerate(off2)])
+        off1 = np.array([min(max(x, bounds[i][0]), bounds[i][1]) for i,x in enumerate(off1)])
+        off2 = np.array([min(max(x, bounds[i][0]), bounds[i][1]) for i,x in enumerate(off2)])
 
         return [off1, off2]
 

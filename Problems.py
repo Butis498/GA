@@ -1,7 +1,7 @@
 import numpy as np
 
 def g1(ind):
-    res = 5*ind[0] + 5* ind[1] + 5 * ind[2] + 5*ind[3] - 5 * sum([x**2 for x in range(1,5)])- sum([x for x in range(5,14)])
+    res = 5*ind[0] + 5* ind[1] + 5 * ind[2] + 5*ind[3] - 5 * sum([x**2 for x in range(0,4)])- sum([x for x in range(5,13)])
     return res
 
 def g4(ind):

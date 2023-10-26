@@ -7,6 +7,7 @@ from src.domain.encoding import EncodingInterface
 from src.domain.selection import SelectionInterface
 from src.domain.population import PopulationInterface
 import pandas as pd
+import numpy as np
 
 @dataclass
 class DEConfig():
@@ -48,7 +49,7 @@ class DifferentialEvolution():
 
     def function_evaluation(self,objective,ind):
 
-        if self.penalty:
+        if self.penalty :
             #print('Funct eval ============ '+str(objective(ind)) +'  Penalty=========',objective(ind) + self.penalty.punish(ind,self.encoding.bounds,self.config.minimize))
             return objective(ind) + self.penalty.punish(ind,self.encoding.bounds,self.config.minimize,self)
         
@@ -78,14 +79,17 @@ class DifferentialEvolution():
                 decoded_ind = [self.encoding.decode(p) for p in pop]
                 # evaluate all candidates in the population
                 scores = [self.function_evaluation(objective,d) for d in decoded_ind]
+                scores_function = [objective(x) for x in decoded_ind]     
+                scores_penalty = np.array(scores) - np.array(scores_function)
                 
+               
                 # check for new best solution
                 out_of_bounds = 0
 
                 for i in range(self.config.n_pop):
 
                     for item,bound in zip(pop[i],self.encoding.bounds):
-                        if item <= bound[0] or item >= bound[1]:
+                        if item < bound[0] or item > bound[1]:
                             out_of_bounds += 1
                     
                     if self.__eval(scores[i],best_eval):
@@ -94,27 +98,30 @@ class DifferentialEvolution():
                         if verbose:
                             print(">%d, new best f(%s) = %f" % (gen,  decoded_ind[i], scores[i]))
 
+                decoded_ind = self.selection.stochastic_ranking(decoded_ind,scores_function,scores_penalty)
+
 
                 generation_list.append(gen)
                 avrg_score_list.append(sum(scores) / len(scores))
                 best_eval_list.append(best_eval)
                 c_out_of_bound_list.append(out_of_bounds)
 
-                
+
+
+                     
                 children = list()
                 # create the next generation
                 for i in range(self.config.n_pop):
 
-                    ind = decoded_ind[i]
                     selected = self.selection.select(decoded_ind,scores)
                     u = self.mutation.mutate(selected,self.encoding.bounds)
-                    new_ind = self.crossover.cross_over(ind,u)
+                    new_ind = self.crossover.cross_over(decoded_ind[i],u)
 
-                    if self.__eval(self.function_evaluation(objective,new_ind),self.function_evaluation(objective,ind)):
+                    if self.__eval(self.function_evaluation(objective,new_ind),self.function_evaluation(objective,decoded_ind[i])):
                         children.append(new_ind)
 
                     else:
-                        children.append(ind)
+                        children.append(decoded_ind[i])
                     
 
                 # replace population

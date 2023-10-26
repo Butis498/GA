@@ -21,7 +21,7 @@ cross_over = DECrossOver()
 population = RealP()
 selection = DESelection()
 encoding = RealEncoding(bounds=[[-1,3]]*4)
-config = differential_evolution.DEConfig(100,100)
+config = differential_evolution.DEConfig(200,150)
 penalty = AveragePenalty()
 
 def quadratic_function(x):
@@ -35,7 +35,7 @@ def objective(x):
 
 
 DE = differential_evolution.DifferentialEvolution(cross_over=cross_over,mutation=mutation,population=population,encoding=encoding,selection=selection,config=config,penalty=penalty)
-best,best_eval = DE.run(objective=objective,verbose=True)
+best,best_eval = DE.run(objective=quadratic_function,verbose=True)
 
 print('Best = ',best,' Score = ', best_eval)
 

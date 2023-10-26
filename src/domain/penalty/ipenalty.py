@@ -19,7 +19,11 @@ class PenaltyInterface(metaclass=ABCMeta):
 
     def is_feasible(self,x):
 
-        for constraint in self.constraints:
+        res = True
+        constraints_violated = []
+        bounds_violated = []
+
+        for i,constraint in enumerate(self.constraints):
             constraint_func = constraint["func"]
             lower_bound = constraint["lower_bound"]
             upper_bound = constraint["upper_bound"]
@@ -28,16 +32,19 @@ class PenaltyInterface(metaclass=ABCMeta):
 
 
             if lower_bound is not None and constraint_value < lower_bound:
-                return False  # Solution violates the lower bound of a constraint
+                constraints_violated.append(i)
+                res = False  # Solution violates the lower bound of a constraint
             if upper_bound is not None and constraint_value > upper_bound:
-                return False  # Solution violates the upper bound of a constraint
+                constraints_violated.append(i)
+                res =  False  # Solution violates the upper bound of a constraint
 
-        for i,bound in zip(x,self.bounds):
-            if i < bound[0] or i > bound[1]:
-                return False
+        for i_bound,bound in zip(x,self.bounds):
+            if i_bound < bound[0] or i_bound > bound[1]:
+                bounds_violated.append(i)
+                res =  False
         
 
-        return True 
+        return res,constraints_violated 
 
     def penalty(self, x):
         penalty_value = 0
@@ -48,12 +55,25 @@ class PenaltyInterface(metaclass=ABCMeta):
             upper_bound = constraint["upper_bound"]
             constraint_value = constraint_func(x)
             
-            if lower_bound is not None and constraint_value < lower_bound:
+            
+            if lower_bound is not None and constraint_value <= lower_bound:
                 violation = lower_bound - constraint_value
-                penalty_value += self.penalty_factor * self.penalty_function(violation)   
-            if upper_bound is not None and constraint_value > upper_bound:
+                penalty_value += abs(self.penalty_factor) * self.penalty_function(violation)
+            if upper_bound is not None and constraint_value >= upper_bound:
                 violation = constraint_value - upper_bound
-                penalty_value += self.penalty_factor  * self.penalty_function(violation) 
+                penalty_value += abs(self.penalty_factor)  * self.penalty_function(violation) 
+
+        for bounds,i in zip(self.bounds,x):
+            LB ,UB = bounds
+            if LB is not None and i <= LB:
+                violation = LB - i
+                penalty_value += abs(self.penalty_factor) * self.penalty_function(violation)   
+            if UB is not None and i >= UB:
+                violation = i - UB
+                penalty_value += abs(self.penalty_factor)  * self.penalty_function(violation) 
+
+            
+        
 
         return penalty_value
     

@@ -5,7 +5,7 @@ from numpy import random
 class PolynomialM(MutationInterface):
 
     def mutate(self, ind,bounds):
-        self.eta = 10
+        self.eta = 4
         for i in range(len(ind)):
             if random.rand() < self.r_mut:
                 u = random.rand()
