@@ -3,10 +3,8 @@ import time
 
 class AveragePenalty(PenaltyInterface):
 
-
     def adjust_penalty(self,factor:1):
         self.penalty_factor = factor
-
 
     def penalty_function(self,x):
 
