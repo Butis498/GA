@@ -2,90 +2,76 @@
 from src.genetic_algorithm.genetic_alorithm import GeneticAlgorithm
 from src.repository.population import Individual
 from src.nsga import NSGAII_SORTING
+from src.nsga import NSGAII
 import pandas as pd
-from src.differential_evolution import DifferentialEvolution
+import numpy as np
+import random
+import math
+import time
 
-
-class NSDE(DifferentialEvolution):
-
-    def fast_non_dominated_sort(self, population,objectives):
-
-
-        columns = ['f'+str(i+1) for i in range(self.n_objectives)]
-        df = pd.DataFrame([pop.fitness for pop in population ],columns=columns)
-        sort = NSGAII_SORTING(df)
-        res = []
-
-        for i,layer in enumerate(sort.layers):
-            new_layer = []
-            for ind in layer:
-                new_ind = Individual(ind)
-                new_ind.rank = i + 1
-                new_ind.fitness = objectives(ind)
-                new_layer.append(new_ind)
-
-            res.append(new_layer)
-        return res
-
-   
-
-    def crowding_distance_assignment(self, solutions):
-
-        if len(solutions) == 0:
-            return
-        for solution in solutions:
-            solution.crowding_distance = 0
-
-        for i in range(self.n_objectives):
-            solutions.sort(key=lambda solution: solution.fitness[i])
-
-        solutions[0].crowding_distance = solutions[-1].crowding_distance = float('inf')
-
-        fmax = max([[k for k in solution.fitness] for solution in solutions])
-        fmin = min([[k for k in solution.fitness] for solution in solutions])
-
-        for i in range(1, len(solutions) - 1):
-            for j in range(self.n_objectives):
-                solutions[i].crowding_distance += (solutions[i + 1].fitness[j] - solutions[i - 1].fitness[j]) / (fmax[j]-fmin[j])
-                
-
+class NSDEII(NSGAII):
+             
 
     def run(self, objectives):
         pop = self.population_generator.generate(self.config.n_pop, self.encoding)
+
         self.n_objectives = len(objectives(pop[0].value))
-
+        gen = 0
         fronts = []
+        children = []
 
-        for c in range(self.config.n_iter):
+        while  gen < self.config.n_iter:
 
-            
+            #give a fitness value to each individual
             for ind in pop:
                 ind.fitness = objectives(ind.value)
 
+            fronts = self.fast_non_dominated_sort(pop)
+            pop = []
 
-            fronts = self.fast_non_dominated_sort(pop,objectives)
-            
             for front in fronts:
+                # assigns a crowding distanance to each elemnt in the front
                 self.crowding_distance_assignment(front)
+                for ind in front:
+                    pop.append(ind)
+
+            
+            # select the top N indivicuals of the prents + children
+            selected = self.selection.sort_population(pop)[:self.config.n_pop]
+
+
+            selected_front = [ind for ind in selected if ind.rank == 1]
+
+
+            children = []
+            remaining = self.config.n_pop
+            for i in range(0, self.config.n_pop):
+
                 
 
-            selected = self.selection.pareto_front_selection(fronts, self.config.n_pop)
-            children = []
+                selected_ind = self.selection.select([individual.value for individual in pop])
+                selected_ind[0] = selected_front[random.randint(0,len(selected_front)-1)].value
+                u = self.mutation.mutate(selected_ind,self.encoding.bounds)
+                new_ind = self.crossover.cross_over(pop[i].value,u)
+                    
+                lower_bound, upper_bound = [bound[0] for bound in self.encoding.bounds],[bound[1] for bound in self.encoding.bounds]
+                new_ind = [max(lb, min(up, y)) for y,lb,up in zip(new_ind,lower_bound,upper_bound)]
+                new_ind = Individual(new_ind)
 
-            selected = self.selection.sort_population(selected)
+                children.append(new_ind)
+                remaining -= 1
 
-            for i in range(0, self.config.n_pop, self.crossover.n_parents):
-                parents = [selected[j + i] for j in range(self.crossover.n_parents)]
-                parents = [parent.value for parent in parents]
-                children_result = self.crossover.cross_over(parents, self.encoding.bounds)
-                # print(children_result)
-                for child in children_result:
-                    # mutation
-                    self.mutation.mutate(child, self.encoding.bounds)
-                    child = Individual(child)
-                    # print(child.value)
-                    children.append(child)
 
-                    # replace population
-            pop = self.population_generator.update(children)
-        return fronts
+                if remaining <= 0:
+                    break
+
+
+                    
+
+            pop = self.population_generator.update(children,selected)
+
+            gen += 1
+
+
+
+        return fronts[0][:self.config.n_pop]

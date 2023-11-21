@@ -4,9 +4,9 @@ import numpy as np
 
 class DESelection(SelectionInterface):
 
-    def select(self,population,score,minimize=True):
+    def select(self,population,minimize=True):
 
-        result = random.sample(population[:len(population)//7],3)
+        result = random.sample(population[:len(population)],3)
 
         result[0] = population[0]
 

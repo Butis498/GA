@@ -113,7 +113,7 @@ class DifferentialEvolution():
                 # create the next generation
                 for i in range(self.config.n_pop):
 
-                    selected = self.selection.select(decoded_ind,scores)
+                    selected = self.selection.select(decoded_ind)
                     u = self.mutation.mutate(selected,self.encoding.bounds)
                     new_ind = self.crossover.cross_over(decoded_ind[i],u)
 
