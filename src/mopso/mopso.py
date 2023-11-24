@@ -28,6 +28,7 @@ class Config:
     alpha:float
     w: float
     gamma: float
+    n_neighborhoods:int
 
 class MOPSO(NSGAII):
 
@@ -50,6 +51,41 @@ class MOPSO(NSGAII):
         return Particle(value, cost, velocity, best_pos, best_cost, crowding_distance=0.0,best_crowding_distance=0.0)
 
         
+    def maintain_diversity(self, repository, n_neighborhoods, threshold):
+        # Divide the repository into n neighborhoods
+        neighborhoods = np.array_split(repository, n_neighborhoods)
+
+
+        new_repository = []
+        for neighborhood in neighborhoods:
+            crowding_distances = [particle.crowding_distance for particle in neighborhood]
+
+            # Replace infinite values with a large finite number
+            crowding_distances = np.where(np.isinf(crowding_distances), np.finfo(np.float64).max, crowding_distances)
+
+            min_crowding_distance = np.min(crowding_distances)
+            max_crowding_distance = np.max(crowding_distances)
+
+            # Add a small constant to the denominator to avoid division by zero
+            epsilon = 1e-9
+
+            if max_crowding_distance == min_crowding_distance:
+                normalized_crowding_distances = np.zeros_like(crowding_distances)
+            else:
+                normalized_crowding_distances = abs(crowding_distances - min_crowding_distance) / abs(max_crowding_distance - min_crowding_distance + epsilon)
+            mean_crowding_distance = np.mean(normalized_crowding_distances)
+
+            if mean_crowding_distance < threshold:
+                # If the distance is lower than a threshold then keep the most centered individual of the neighborhood
+                most_centered_individual = min(neighborhood, key=lambda particle: abs(particle.crowding_distance - mean_crowding_distance))
+                new_repository.append(most_centered_individual)
+            else:
+                # If the distance is not lower than the threshold, keep all individuals
+                new_repository.extend(neighborhood)
+
+        return new_repository
+
+
 
 
     def copy_particle(self, particle):
@@ -111,7 +147,8 @@ class MOPSO(NSGAII):
                     pop[i].best_crowding_distance = pop[i].crowding_distance
                 
             repository += self.fast_non_dominated_sort(pop,False)[0]
-            repository += self.fast_non_dominated_sort(repository,verbose)[0]
+            repository = self.fast_non_dominated_sort(repository,verbose)[0]
+            repository = self.maintain_diversity(repository,self.config.n_neighborhoods,0.5)
             self.crowding_distance_assignment(repository)
             repository = sorted(repository, key=lambda x: x.crowding_distance,reverse=True)[:self.config.n_pop]
             
