@@ -14,7 +14,6 @@ class NSDEII(NSGAII):
 
     def run(self, objectives):
         pop = self.population_generator.generate(self.config.n_pop, self.encoding)
-
         self.n_objectives = len(objectives(pop[0].value))
         gen = 0
         fronts = []
@@ -64,9 +63,7 @@ class NSDEII(NSGAII):
 
                 if remaining <= 0:
                     break
-
-
-                    
+       
 
             pop = self.population_generator.update(children,selected)
 

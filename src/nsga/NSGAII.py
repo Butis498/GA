@@ -9,11 +9,12 @@ import time
 
 class NSGAII(GeneticAlgorithm):
 
-    def fast_non_dominated_sort(self, population):
+    def fast_non_dominated_sort(self, population,verbose=False):
         # sort and return a list of fronts the element[0] is parento front
         sort = NSGAII_SORTING(population)
         #sort.plot_pareto_front(population,n=self.config.n_pop,labels=['f1','f2'])
-        sort.plot_pareto_front_3d(pop=population,n=self.config.n_pop,labels=['f1','f2','f3'])
+        if verbose:
+            sort.plot_pareto_front_3d(pop=population,n=self.config.n_pop,labels=['f1','f2','f3'])
         return sort.layers
    
 
@@ -41,10 +42,11 @@ class NSGAII(GeneticAlgorithm):
             for i in range(1, len(solutions) - 1):
 
                 solutions[i].crowding_distance += (solutions[i + 1].fitness[k] - solutions[i - 1].fitness[k])/ abs(norm)
+                
                             
 
 
-    def run(self, objectives):
+    def run(self, objectives,verbose=False):
         pop = self.population_generator.generate(self.config.n_pop, self.encoding)
 
         self.n_objectives = len(objectives(pop[0].value))
@@ -58,7 +60,7 @@ class NSGAII(GeneticAlgorithm):
             for ind in pop:
                 ind.fitness = objectives(ind.value)
 
-            fronts = self.fast_non_dominated_sort(pop)
+            fronts = self.fast_non_dominated_sort(pop,verbose)
             pop = []
 
             for front in fronts:
@@ -70,7 +72,6 @@ class NSGAII(GeneticAlgorithm):
             
             # select the top N indivicuals of the prents + children
             selected = self.selection.sort_population(pop)[:self.config.n_pop]
-
 
             selected = [self.selection.select(selected) for _ in range(self.config.n_pop)]
 
