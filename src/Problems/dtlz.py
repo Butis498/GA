@@ -5,8 +5,23 @@ from .problem import Problem
 class Dtlz(Problem):
 
     def __init__(self,n_dtlz,inverse=False) -> None:
+    
         self.n_dtlz = n_dtlz
         self.inverse = inverse
+        zs = [[[0.125,0.125,0.25],
+                [0.375,0.375,0.25]],
+                [[0.5,0.5,1],
+                [-1.11022302e-16,0,-5.00000000e-01]],
+                [[0.33074772,0.94371921,0.94371921],
+                [ 0.16925228,-0.44371921,-0.44371921]],
+                [[0.5, 0.5,0.29289322],
+                [1.25,1.25,1.45710678]]]
+
+        if inverse:
+            self.z = zs[n_dtlz][0]
+        else:
+            self.z = zs[n_dtlz][1]
+
         self.name = 'dtlz'+str(n_dtlz)
         problem = get_problem(self.name)
         if self.inverse:
@@ -17,9 +32,10 @@ class Dtlz(Problem):
         self.k = n - m + 1
         super().__init__(n, m,bounds)
 
+    
+
     @Problem.problem
     def dtlz1(self,x):
-
         self.g = 100 * (self.k + np.sum((x[self.m-1:] - 0.5)**2 - np.cos(20 * np.pi * (x[self.m-1:] - 0.5))))
         objectives = 0.5 * (1 + self.g) * np.ones(self.m)
 

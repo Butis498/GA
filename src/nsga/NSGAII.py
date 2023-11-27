@@ -12,7 +12,6 @@ class NSGAII(GeneticAlgorithm):
     def fast_non_dominated_sort(self, population,verbose=False):
         # sort and return a list of fronts the element[0] is parento front
         sort = NSGAII_SORTING(population)
-        #sort.plot_pareto_front(population,n=self.config.n_pop,labels=['f1','f2'])
         if verbose:
             sort.plot_pareto_front_3d(pop=population,n=self.config.n_pop,labels=['f1','f2','f3'])
         return sort.layers
@@ -56,7 +55,6 @@ class NSGAII(GeneticAlgorithm):
 
         while  gen < self.config.n_iter:
 
-            #give a fitness value to each individual
             for ind in pop:
                 ind.fitness = objectives(ind.value)
 
@@ -64,36 +62,30 @@ class NSGAII(GeneticAlgorithm):
             pop = []
 
             for front in fronts:
-                # assigns a crowding distanance to each elemnt in the front
                 self.crowding_distance_assignment(front)
                 for ind in front:
                     pop.append(ind)
 
-            
-            # select the top N indivicuals of the prents + children
             selected = self.selection.sort_population(pop)[:self.config.n_pop]
-
             selected = [self.selection.select(selected) for _ in range(self.config.n_pop)]
-
 
             children = []
 
             for i in range(0, self.config.n_pop, self.crossover.n_parents):
+
                 parents = [selected[j + i] for j in range(self.crossover.n_parents)]
                 parents = [parent.value for parent in parents]
-                #use SBX for cross over
                 children_result = self.crossover.cross_over(parents, self.encoding.bounds)
 
                 for child in children_result:
-                    # Use polinomial mutation
                     self.mutation.mutate(child, self.encoding.bounds)
                     child = Individual(child)
-                    # print(child.value)
                     children.append(child)
 
             pop = self.population_generator.update(children,selected)
 
             gen += 1
+            
 
 
 
