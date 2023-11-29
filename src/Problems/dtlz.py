@@ -8,14 +8,14 @@ class Dtlz(Problem):
     
         self.n_dtlz = n_dtlz
         self.inverse = inverse
-        zs = [[[0.125,0.125,0.25],
+        zs = {1:[[0.125,0.125,0.25],
                 [0.375,0.375,0.25]],
-                [[0.5,0.5,1],
+                2:[[0.5,0.5,1],
                 [-1.11022302e-16,0,-5.00000000e-01]],
-                [[0.33074772,0.94371921,0.94371921],
+                5:[[0.33074772,0.94371921,0.94371921],
                 [ 0.16925228,-0.44371921,-0.44371921]],
-                [[0.5, 0.5,0.29289322],
-                [1.25,1.25,1.45710678]]]
+                7:[[0.5, 0.5,0.29289322],
+                [1.25,1.25,1.45710678]]}
 
         if inverse:
             self.z = zs[n_dtlz][0]
@@ -62,25 +62,27 @@ class Dtlz(Problem):
         return objectives
 
     @Problem.problem
-    def dtlz5(self, x):
-        self.g = np.sum((x[self.m-1:] - 0.5)**2)
-        theta = np.pi / (4 * (1 + self.g)) * (1 + 2 * self.g * x[:self.m-1])
-        objectives = (1 + self.g) * np.ones(self.m)
+    def dtlz5(self,x):
+        self.g = sum((xi - 0.5) ** 2 for xi in x[self.m-1:])
+        theta = [None]*(self.m-1)
+        for i in range(self.m-1):
+            theta[i] = np.pi/(4*(1+self.g))*(1+2*self.g*x[i+1])
 
+        objectives = []
         for i in range(self.m):
-            for j in range(self.m - (i + 1)):
-                objectives[i] *= np.cos(theta[j])
-
+            objective_i = (1 + self.g)
+            for j in range(self.m - 2 - i):
+                objective_i *= np.cos(theta[j] * np.pi / 2)
             if i > 0:
-                objectives[i] *= np.sin(theta[self.m - (i + 1)])
+                objective_i *= np.sin(theta[ self.m-1- i] * np.pi / 2)
+            objectives.append(objective_i)
 
         return objectives
-
     @Problem.problem
     def dtlz7(self, x):
-        self.g = 1 + 9 / self.k * np.sum(x)
-        h = self.m - np.sum(x[:self.m-1] / (1.0 + self.g) * (1.0 + np.sin(3.0 * np.pi * x[:self.m-1])))
-        objectives = np.concatenate([x[:self.m-1], [1.0 + self.g * h]])
+        self.g = 1 + 9 / self.k * np.sum(x[self.m - 1:])
+        h = self.m - np.sum(x[:self.m - 1] / (1.0 + self.g) * (1.0 + np.sin(3.0 * np.pi * x[:self.m - 1])))
+        objectives = np.concatenate([x[:self.m - 1], [1.0 + self.g * h]])
 
         return objectives
 

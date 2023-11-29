@@ -10,7 +10,6 @@ import time
 class NSGAII(GeneticAlgorithm):
 
     def fast_non_dominated_sort(self, population,verbose=False):
-        # sort and return a list of fronts the element[0] is parento front
         sort = NSGAII_SORTING(population)
         if verbose:
             sort.plot_pareto_front_3d(pop=population,n=self.config.n_pop,labels=['f1','f2','f3'])
@@ -33,6 +32,7 @@ class NSGAII(GeneticAlgorithm):
 
             max_value = max([solution.fitness[k] for solution in solutions])
             min_value = min([solution.fitness[k] for solution in solutions])
+
             if max_value - min_value == 0:
                 norm = 10e-10
             else:
@@ -40,7 +40,7 @@ class NSGAII(GeneticAlgorithm):
 
             for i in range(1, len(solutions) - 1):
 
-                solutions[i].crowding_distance += (solutions[i + 1].fitness[k] - solutions[i - 1].fitness[k])/ abs(norm)
+                solutions[i].crowding_distance += solutions[i + 1].fitness[k] - solutions[i - 1].fitness[k]
                 
                             
 

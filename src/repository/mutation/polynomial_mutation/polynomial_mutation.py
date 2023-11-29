@@ -8,7 +8,6 @@ class PolynomialM(MutationInterface):
 
     def mutate(self,ind, bounds):
 
-        self.eta = 6
         for i in range(len(ind)):
             # Check if mutation should be applied
             if np.random.rand() > self.r_mut:

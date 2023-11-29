@@ -12,7 +12,7 @@ import time
 class NSDEII(NSGAII):
              
 
-    def run(self, objectives):
+    def run(self, objectives,verbose=False):
         pop = self.population_generator.generate(self.config.n_pop, self.encoding)
         self.n_objectives = len(objectives(pop[0].value))
         gen = 0
@@ -25,7 +25,7 @@ class NSDEII(NSGAII):
             for ind in pop:
                 ind.fitness = objectives(ind.value)
 
-            fronts = self.fast_non_dominated_sort(pop)
+            fronts = self.fast_non_dominated_sort(pop,verbose=verbose)
             pop = []
 
             for front in fronts:

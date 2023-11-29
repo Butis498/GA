@@ -4,21 +4,20 @@ import numpy as np
 import time
 class SimulatedBC(CrossOverInterface):
 
-    def cross_over(self, parents, bounds):
+    def cross_over(self, parents, bounds,eta=15):
         parent1, parent2 = parents
         parent1 = np.array(parent1)
         parent2 = np.array(parent2)
-        etc = 15
 
         if np.random.rand() > self.r_cross:
             return parent1, parent2
 
         u = random.random()
 
-        if self.r_cross <= 0.5:
-            beta = (2*u)**(1/(etc+1))
+        if u <= 0.5:
+            beta = (2*u)**(1/(eta+1))
         else:
-            beta = (1/(2*(1-u)))**(1/(etc+1))
+            beta = (1/(2*(1-u)))**(1/(eta+1))
 
         if np.linalg.norm(parent2) < np.linalg.norm(parent1):
             parent1, parent2 = parent2, parent1
